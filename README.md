@@ -83,6 +83,9 @@ parts (entrypoint, deployment, serverless observability) live here.
 - **nextjs-api-decision** — decide where backend logic lives: RSC + Server
   Actions vs Route Handlers vs separate API vs plain React, with a decision
   tree and worked examples.
+- **nextjs-api-architecture** — hexagonal (ports & adapters) structure for the
+  backend inside Next.js: one service layer shared by Route Handlers, Server
+  Actions, and RSC pages, with thin entrypoints and dto/mapper patterns.
 - **nextjs-testing** — Vitest unit/component tests (RTL) + Playwright E2E;
   mocking next/navigation, next/headers, and Server Actions.
 - **nextjs-monitoring** — Web Vitals (useReportWebVitals / Vercel Analytics),
