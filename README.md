@@ -75,6 +75,20 @@ parts (entrypoint, deployment, serverless observability) live here.
   Vercel Observability + OTLP export (no scrape ports), pino logging, Pyroscope
   profiling — on top of the generic `ts-monitoring`.
 
+### nodejs-nextjs-engineer
+
+- **nextjs-architecture** — optimal Next.js (App Router) implementation:
+  server-first with React Server Components, data fetching/caching, Server
+  Actions, route groups, client/server boundaries.
+- **nextjs-api-decision** — decide where backend logic lives: RSC + Server
+  Actions vs Route Handlers vs separate API vs plain React, with a decision
+  tree and worked examples.
+- **nextjs-testing** — Vitest unit/component tests (RTL) + Playwright E2E;
+  mocking next/navigation, next/headers, and Server Actions.
+- **nextjs-monitoring** — Web Vitals (useReportWebVitals / Vercel Analytics),
+  OpenTelemetry server tracing via instrumentation.ts, errors & structured
+  logging.
+
 ## License
 
 MIT
