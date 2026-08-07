@@ -25,7 +25,7 @@ outside the app boundary (production DB, third-party HTTP APIs) are fakes.
 
 ## Building the App Under Test
 
-Use the same `createApp()` the Vercel function uses, but inject the test
+Use the same `createApp()` the entrypoint uses, but inject the test
 boundaries:
 
 ```ts

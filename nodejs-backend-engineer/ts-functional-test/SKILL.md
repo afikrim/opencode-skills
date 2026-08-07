@@ -38,7 +38,8 @@ actually live.
   service, map the response. Not functional test targets. At most a couple of
   smoke tests if a handler holds non-trivial logic worth pinning (with the
   service port mocked via Hono's `app.request()`).
-- **`api/[[route]].ts`** — Vercel glue; never a test target.
+- **The entrypoint (`src/index.ts`, `api/[[route]].ts`) — platform glue; never
+  a test target.
 
 ## Thin Adapters
 

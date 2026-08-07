@@ -1,95 +1,78 @@
 ---
 name: ts-hexagonal-architecture
-description: Structure TypeScript applications on Vercel using hexagonal (ports & adapters) architecture with Hono as the HTTP framework, a single api/[[route]].ts catch-all Vercel Function, Drizzle ORM for data access, and thin handlers/adapters designed so they need no tests. Uses dto+mapper patterns so no layer leaks entity models into external dependencies or presentation. Use when the user asks to scaffold a TypeScript API on Vercel, organize code into core/ports/service/adapters/handlers layers, define domain entities and ports, implement adapters (postgres, redis, queue, etc.), build Hono routes, or wire up the app with zod-env config. Triggers on "hexagonal architecture", "ports and adapters", "scaffold a TypeScript API", "Hono on Vercel", "api/[[route]].ts", "clean architecture in TypeScript".
+description: Structure TypeScript applications using hexagonal (ports & adapters) architecture with Hono as the HTTP framework, Drizzle ORM for data access, and thin handlers/adapters designed so they need no tests. Uses dto+mapper patterns so no layer leaks entity models into external dependencies or presentation. Use when the user asks to scaffold a TypeScript API, organize code into core/ports/service/adapters/handlers layers, define domain entities and ports, implement adapters (postgres, redis, queue, etc.), build Hono routes, or wire up the app with zod-env config. Triggers on "hexagonal architecture", "ports and adapters", "scaffold a TypeScript API", "Hono", "clean architecture in TypeScript".
 ---
 
-# Hexagonal Architecture (TypeScript on Vercel)
+# Hexagonal Architecture (TypeScript)
 
-Apply this layout whenever scaffolding or extending a TypeScript application
-deployed to Vercel. The entrypoint is a single Vercel Function that mounts a
-Hono app; everything below it is the same hexagonal shape as any other backend.
+Apply this layout whenever scaffolding or extending a TypeScript application.
+The entrypoint starts a Hono HTTP server; everything below it is the standard
+hexagonal shape.
 
 ## Directory Layout
 
 ```text
 <project>/
-├── api/
-│   └── [[route]].ts            # single catch-all Vercel Function: mounts the Hono app
 ├── src/
+│   ├── index.ts                 # entrypoint: load config, build app, start server
 │   ├── core/
-│   │   ├── entity/<entity>.ts  # domain entities, value types, enums
-│   │   └── ports/<port>.ts     # interfaces (contracts), grouped by use
-│   ├── service/<service>.ts    # service layer, implements use cases
+│   │   ├── entity/<entity>.ts   # domain entities, value types, enums
+│   │   └── ports/<port>.ts      # interfaces (contracts), grouped by use
+│   ├── service/<service>.ts     # service layer, implements use cases
 │   ├── adapters/
-│   │   └── <adapter>/          # postgres, redis, queue, mock, ...
-│   │       ├── <adapter>.ts    # thin impl, calls dto mappers
+│   │   └── <adapter>/           # postgres, redis, queue, mock, ...
+│   │       ├── <adapter>.ts     # thin impl, calls dto mappers
 │   │       └── dto/
 │   │           ├── <dto-model>.ts # adapter's own model
-│   │           └── mapper.ts   # pure entity<->dto mappers
+│   │           └── mapper.ts    # pure entity<->dto mappers
 │   ├── handlers/
-│   │   ├── routes.ts           # Hono root file: basePath + route registration
-│   │   ├── <handler>.ts        # one file per endpoint/resource
+│   │   ├── routes.ts            # Hono root file: basePath + route registration
+│   │   ├── <handler>.ts         # one file per endpoint/resource
 │   │   └── dto/
-│   │       ├── <dto-model>.ts  # request/response models
-│   │       └── mapper.ts       # pure dto<->service/entity mappers
-│   └── config/config.ts        # app config validated via zod
+│   │       ├── <dto-model>.ts   # request/response models
+│   │       └── mapper.ts        # pure dto<->service/entity mappers
+│   └── config/config.ts         # app config validated via zod
 ├── drizzle/
-│   ├── schema.ts               # Drizzle table definitions
-│   └── <migration>.sql         # generated migrations
-├── drizzle.config.ts           # drizzle-kit config (dialect, schema, out)
+│   ├── schema.ts                # Drizzle table definitions
+│   └── <migration>.sql          # generated migrations
+├── drizzle.config.ts            # drizzle-kit config (dialect, schema, out)
 ├── vitest.config.ts
 ├── tsconfig.json
 └── package.json
 ```
 
-## The Vercel Entrypoint: `api/[[route]].ts`
-
-Vercel treats every file under `api/` as a Function; a catch-all
-`[[route]]` file captures **every path** under that prefix and hands it to one
-Hono app. This is the only place the app meets Vercel.
+## The Entrypoint: `src/index.ts`
 
 ```ts
-// api/[[route]].ts
-import { handle } from 'hono/vercel'
-import { app } from '../src/handlers/routes'
+// src/index.ts
+import { serve } from '@hono/node-server'
+import { createApp } from './app'
+import { config } from './config/config'
 
-export const config = {
-  runtime: 'edge', // or 'nodejs' — see Runtime Notes
-}
+const app = createApp()
+const port = Number(config.PORT ?? 3000)
 
-export default handle(app)
+serve({ fetch: app.fetch, port }, (info) => {
+  app.logger.info(`listening on :${info.port}`)
+})
 ```
 
-- `handle(app)` from `hono/vercel` adapts the Hono app to Vercel's Function
-  signature. Import it from `hono/vercel`, not `hono/node-server` (that one is
-  for self-hosted Node servers).
-- The default export is the only thing Vercel calls. No HTTP server is ever
-  started — Vercel manages invocation, scaling, and lifecycle.
-- Keep this file **empty of logic**: it imports a pre-wired `app` and exports
-  the handler. All route wiring lives in `src/handlers/routes.ts`.
-
-### Runtime Notes
-
-- `runtime: 'edge'` runs on the Vercel Edge Runtime: fast cold starts, no
-  Node.js APIs. Works if your adapters use only Web-standard APIs (fetch,
-  neon-http / http drivers). Drizzle's `neon-http` and `postgres` HTTP drivers
-  are edge-compatible.
-- `runtime: 'nodejs'` runs on the Node.js runtime and supports full Node
-  APIs (node-postgres pools, fs, etc.). Choose nodejs when an adapter needs a
-  TCP connection, native module, or a Node-only library.
-- Whatever you pick, run locally with `vercel dev` (not a custom dev server) so
-  the routing match mirrors production.
-- Environment variables come from Vercel's environment (`.env` is loaded
-  locally by `vercel dev`). No `dotenv` call needed in the function.
+- The composition root is `createApp()` (see Wiring) so tests and the
+  entrypoint build the same graph. The entrypoint itself only: loads config,
+  builds the app, starts the server.
+- `@hono/node-server` (`serve`) runs the Hono app on Node without an Express
+  dependency. If the same code deploys elsewhere (e.g. Vercel), only this
+  entrypoint changes — see the platform-specific skills.
+- Load `config` first and fail fast before the server starts.
 
 ## Layer Responsibilities
 
-### 1. `api/[[route]].ts`
+### 1. `src/index.ts`
 
-- Import the wired Hono `app`, adapt with `handle`, export it.
-- **Never** build adapters/services/handlers here. Wiring lives in a bootstrap
-  module (`src/handlers/routes.ts` or `src/app.ts`) so tests can build the same
-  graph without importing Vercel glue.
+- Load config (`config`), build the app via `createApp()`, start the server.
+- **Never** build adapters/services/handlers here. Wiring lives in
+  `createApp()` so tests can build the same graph without importing server
+  glue.
 
 ### 2. `src/core/entity/<entity>.ts`
 
@@ -206,9 +189,7 @@ The presentation layer, backed by Hono. Two parts:
 
 - `src/handlers/routes.ts` — the root file. Creates the Hono app, sets
   `basePath('/api')`, registers routes and middleware, and exports the wired
-  `app`. This is what `api/[[route]].ts` imports. It is also the composition
-  root: build adapters → services → handlers here (or delegate to a
-  `src/app.ts` bootstrap that tests can reuse).
+  `app` (or a `createRoutes` function). This is what `createApp()` uses.
 - `src/handlers/<handler>.ts` — one file per endpoint/resource
   (`user.ts`, `auth.ts`), each exporting a Hono sub-app or route group.
 
@@ -217,19 +198,12 @@ The presentation layer, backed by Hono. Two parts:
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { createUserRoutes } from './user'
-import { PostgresUserRepository } from '../adapters/postgres/user-repository'
-import { UserService } from '../service/user-service'
-import { db } from '../adapters/postgres/db'
 
-export const app = new Hono().basePath('/api')
-
-const userRepo = new PostgresUserRepository(db)
-const userService = new UserService(userRepo)
-
-app.use('*', logger())
-app.route('/users', createUserRoutes(userService))
-
-export type App = typeof app
+export function createRoutes(userService: UserService) {
+  return new Hono()
+    .use('*', logger())
+    .route('/users', createUserRoutes(userService))
+}
 ```
 
 Per-endpoint handler rules:
@@ -310,8 +284,8 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().default(3000),
   DATABASE_URL: z.string().url(),
-  DATABASE_AUTH_TOKEN: z.string().optional(),
   REDIS_URL: z.string().url().optional(),
 })
 
@@ -326,34 +300,38 @@ export const config = parsed.data
 Rules for config:
 
 - One `z.object` schema describing everything the app reads from env.
-- `z.enum`, `z.string().url()`, `.optional()`, `.default()` encode the contract
-  the way `,required` / `envDefault` did in the Go skill.
+- `z.enum`, `z.string().url()`, `z.coerce.number()`, `.optional()`, `.default()`
+  encode the contract the way `,required` / `envDefault` did in the Go skill.
 - Throw with a descriptive message on startup if required vars are missing —
-  fail fast in `api/[[route]].ts` import time.
+  fail fast before the server starts.
 - Never destructure `process.env` ad-hoc inside services or adapters; read only
   from the validated `config`.
 
 ## Wiring
 
-The composition root is `src/handlers/routes.ts` (imported by the catch-all
-function). Build bottom-up:
+The composition root is `createApp()` in `src/app.ts`. Build bottom-up:
 
 1. `config` → 2. adapters (`db`, redis, queue) → 3. services → 4. handlers/routes.
 
-For tests, keep the same composition behind a function so both `api/[[route]].ts`
-and `test/` can build it:
-
 ```ts
 // src/app.ts
-export function createApp(overrides?: { db?: DB }): App {
+import { Hono } from 'hono'
+import { createRoutes } from './handlers/routes'
+import { PostgresUserRepository } from './adapters/postgres/user-repository'
+import { UserService } from './service/user-service'
+import { db } from './adapters/postgres/db'
+
+export type App = ReturnType<typeof createApp>
+
+export function createApp(overrides?: { db?: DB }): Hono {
   const db = overrides?.db ?? defaultDb
   const userRepo = new PostgresUserRepository(db)
   const userService = new UserService(userRepo)
-  return new Hono().basePath('/api').route('/users', createUserRoutes(userService))
+  return createRoutes(userService)
 }
 ```
 
-`api/[[route]].ts` then only does: `export default handle(createApp())`.
+Tests and the entrypoint both call `createApp()`, passing test boundaries.
 
 ## Testing Strategy
 
@@ -376,13 +354,12 @@ glue and are not test targets.
 ## Dependency Direction
 
 ```text
-api/[[route]].ts → src/app.ts → handlers → ports (handler deps) → service
+src/index.ts → src/app.ts → handlers → ports (handler deps) → service
 service → ports (service deps) → adapters
 core → entity, ports (no outward deps)
 ```
 
-- Dependencies point **inward**. Core knows nothing about Hono, Vercel, or
-  Drizzle.
+- Dependencies point **inward**. Core knows nothing about Hono or Drizzle.
 - Every concrete dependency crosses the boundary only through its port
   interface.
 - Swap implementations (postgres ↔ mock, real queue ↔ in-memory) without
@@ -416,6 +393,6 @@ core → entity, ports (no outward deps)
   `adapters/<adapter>/dto/` mappers. Port interfaces keep using entity.
 - Confirm handlers never encode/accept `entity` types directly — only via
   `handlers/dto/` models and `dto/mapper.ts`.
-- Confirm `api/[[route]].ts` contains no logic — only `handle(createApp())`.
+- Confirm `src/index.ts` contains no logic — only config, `createApp()`, serve.
 - Confirm the DTOs and mappers are pure and unit-testable (no driver/Hono types
   in their signatures).

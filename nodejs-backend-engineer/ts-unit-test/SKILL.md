@@ -43,7 +43,7 @@ Anything that needs a dependency to run:
 - **`src/handlers/`** — Hono request/response machinery.
 - **`src/config/`** — reading `process.env` (the zod *schema* is unit-testable,
   the module that reads env is not).
-- **`api/`** — Vercel Function glue.
+- **The entrypoint (`src/index.ts`, `api/[[route]].ts`)** — platform glue.
 
 ## Conventions
 

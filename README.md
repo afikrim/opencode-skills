@@ -46,11 +46,13 @@ as a top-level skill.
 - **grafana** — local Grafana setup via docker compose with a full observability
   stack (Prometheus, Loki, Tempo, Pyroscope) and provisioning as code.
 
-### nodejs-vercel-backend-engineer
+### nodejs-backend-engineer
+
+Generic TypeScript backend skills (runnable anywhere Node runs).
 
 - **ts-hexagonal-architecture** — TypeScript hexagonal (ports & adapters) layout
-  on Vercel: single `api/[[route]].ts` catch-all Function mounting a Hono app,
-  Drizzle ORM, thin handlers/adapters, dto+mapper patterns.
+  with Hono, Drizzle ORM, thin handlers/adapters, dto+mapper patterns, entry
+  via `hono/node-server`.
 - **ts-unit-test** — Vitest unit tests scoped to pure functions only: mappers,
   transformers, helpers, zod schemas.
 - **ts-functional-test** — Vitest functional tests for the business logic
@@ -58,8 +60,20 @@ as a top-level skill.
 - **ts-integration-test** — Vitest full-stack wiring tests with Drizzle against
   in-memory SQLite and external HTTP via WireMock, compared against golden
   files/fixtures.
-- **ts-monitoring** — push-based observability for Vercel serverless: pino
-  logging, OpenTelemetry OTLP (Vercel Observability), Pyroscope profiling.
+- **ts-monitoring** — observability for long-running Node/Hono services: pino
+  logging, OpenTelemetry, Prometheus pull + OTLP push, Pyroscope profiling.
+
+### nodejs-vercel-backend-engineer
+
+Vercel layer on top of `nodejs-backend-engineer` — only the platform-specific
+parts (entrypoint, deployment, serverless observability) live here.
+
+- **ts-vercel-architecture** — deploy the `ts-hexagonal-architecture` app to
+  Vercel: single `api/[[route]].ts` catch-all Function mounting the Hono app
+  via `hono/vercel`'s `handle()`, edge/nodejs runtime, `vercel dev`/deploy.
+- **ts-vercel-monitoring** — push-based observability for Vercel serverless:
+  Vercel Observability + OTLP export (no scrape ports), pino logging, Pyroscope
+  profiling — on top of the generic `ts-monitoring`.
 
 ## License
 
