@@ -32,6 +32,10 @@ Restart opencode.
   (service layer), with ports mocked.
 - **integration-test** — full-stack wiring tests with go-sqlmock (mock DB) and
   WireMock (mock external APIs), compared against golden files/fixtures.
+- **monitoring** — observability for Go services: zap structured logging,
+  OpenTelemetry traces, Prometheus metrics, pprof + Pyroscope profiling.
+- **grafana** — local Grafana setup via docker compose with a full observability
+  stack (Prometheus, Loki, Tempo, Pyroscope) and provisioning as code.
 
 ## License
 
