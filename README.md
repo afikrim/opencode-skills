@@ -24,6 +24,12 @@ Restart opencode.
 
 ## Skills
 
+Skills are grouped by domain. The loader scans recursively, so nesting works
+out of the box — `go-backend-engineer/<skill>/SKILL.md` is discovered the same
+as a top-level skill.
+
+### go-backend-engineer
+
 - **hexagonal-architecture** — Go hexagonal (ports & adapters) layout with thin
   handlers/adapters (no tests needed) and dto+mapper patterns.
 - **unit-test** — unit tests scoped to pure functions only: mappers,
