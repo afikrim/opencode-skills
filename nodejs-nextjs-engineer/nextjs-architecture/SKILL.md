@@ -9,6 +9,15 @@ Apply these principles whenever building or extending a Next.js application
 (App Router). The default mental model: **server-first**. Do as much as
 possible on the server, and add client interactivity only where required.
 
+> **Related skills — load alongside this one:**
+> - Client/UI components live in Next.js too — load `react-architecture` for
+>   component structure, Rules of Hooks, and purity.
+> - `react-state-management` for client state (useState/Context/store) and
+>   server state via TanStack Query/SWR in client components.
+> - `react-performance` for memoization and re-render avoidance in Client
+>   Components (note: use `next/dynamic` instead of `React.lazy`).
+> - This skill covers the Next.js layer; those cover the React layer. Use both.
+
 ## Core Mental Model
 
 1. **Server Components are the default.** Every component is a Server Component

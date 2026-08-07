@@ -5,6 +5,11 @@ description: Write tests for a Next.js (App Router) application: unit tests with
 
 # Testing Next.js (App Router)
 
+> **Related skills — load alongside this one:** `react-testing` covers the
+> React Testing Library layer for Client Components (queries, user-event,
+> async, renderHook, mocking) in depth; this skill adds the Next.js specifics
+> (mocking next/navigation, next/headers, Server Actions). Use both together.
+
 Three layers, each with the right tool:
 
 1. **Unit tests** — pure logic (helpers, utilities, schemas) with Vitest.

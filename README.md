@@ -75,6 +75,21 @@ parts (entrypoint, deployment, serverless observability) live here.
   Vercel Observability + OTLP export (no scrape ports), pino logging, Pyroscope
   profiling — on top of the generic `ts-monitoring`.
 
+### reactjs-engineer
+
+Best-practice React skills (Vite SPA / plain React; Next.js-specific layers
+live in `nodejs-nextjs-engineer`).
+
+- **react-architecture** — component hierarchy, Rules of Hooks, pure
+  components, composition, lifting state, custom hooks, file organization.
+- **react-state-management** — the state ladder: useState, useReducer, Context,
+  reducer+context provider, external stores (Zustand/RTK/Jotai), and server
+  state (TanStack Query/SWR).
+- **react-performance** — measure-first optimization: memo/useMemo/useCallback
+  with judgment, code splitting/lazy, context pitfalls, anti-patterns.
+- **react-testing** — Vitest + Testing Library + user-event: queries by
+  role/label, user interactions, async/`findBy`, mocking fetch, `renderHook`.
+
 ### nodejs-nextjs-engineer
 
 - **nextjs-architecture** — optimal Next.js (App Router) implementation:

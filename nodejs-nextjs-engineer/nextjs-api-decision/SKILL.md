@@ -5,6 +5,12 @@ description: Decide where backend logic belongs in a Next.js project — Route H
 
 # Next.js: Where Should the Backend Live?
 
+> **Related skills — load alongside this one:** when the decision lands on
+> plain React / SPA, load `react-architecture` for component structure and
+> `react-state-management` for state; when it lands on "backend in Next.js",
+> load `nextjs-api-architecture`. This skill decides *where*; those define
+> *how*.
+
 A decision framework for where logic/API belongs. Four placements, with clear
 triggers.
 
