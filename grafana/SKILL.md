@@ -1,6 +1,6 @@
 ---
 name: grafana
-description: Set up and configure Grafana locally, including a full observability stack (Grafana + Prometheus + Loki + Tempo + Pyroscope) via docker compose, provisioning datasources/dashboards, and connecting an OTel-instrumented Go service. Use when the user asks to configure Grafana locally, run Grafana with docker compose, provision datasources or dashboards, or stand up a local observability stack. Triggers on "grafana", "observability stack", "grafana docker", "provisioning grafana", "grafana loki tempo prometheus pyroscope".
+description: Set up and configure Grafana locally, including a full observability stack (Grafana + Prometheus + Loki + Tempo + Pyroscope) via docker compose, provisioning datasources/dashboards, and connecting an OTel-instrumented service. Use when the user asks to configure Grafana locally, run Grafana with docker compose, provision datasources or dashboards, or stand up a local observability stack. Triggers on "grafana", "observability stack", "grafana docker", "provisioning grafana", "grafana loki tempo prometheus pyroscope".
 ---
 
 # Grafana (Local Setup)

@@ -30,16 +30,19 @@ as a top-level skill.
 
 ### go-backend-engineer
 
-- **hexagonal-architecture** — Go hexagonal (ports & adapters) layout with thin
+- **go-hexagonal-architecture** — Go hexagonal (ports & adapters) layout with thin
   handlers/adapters (no tests needed) and dto+mapper patterns.
-- **unit-test** — unit tests scoped to pure functions only: mappers,
+- **go-unit-test** — unit tests scoped to pure functions only: mappers,
   transformers, helpers.
-- **functional-test** — functional tests for the business logic implementation
+- **go-functional-test** — functional tests for the business logic implementation
   (service layer), with ports mocked.
-- **integration-test** — full-stack wiring tests with go-sqlmock (mock DB) and
+- **go-integration-test** — full-stack wiring tests with go-sqlmock (mock DB) and
   WireMock (mock external APIs), compared against golden files/fixtures.
-- **monitoring** — observability for Go services: zap structured logging,
+- **go-monitoring** — observability for Go services: zap structured logging,
   OpenTelemetry traces, Prometheus metrics, pprof + Pyroscope profiling.
+
+### General (language-agnostic)
+
 - **grafana** — local Grafana setup via docker compose with a full observability
   stack (Prometheus, Loki, Tempo, Pyroscope) and provisioning as code.
 

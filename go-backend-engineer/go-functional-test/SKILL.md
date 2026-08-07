@@ -1,6 +1,6 @@
 ---
-name: functional-test
-description: Write functional tests in Go for the business logic implementation. Use when the user asks to test whether a function or feature fulfills its functional requirement, add *_test.go files for services or use cases, or verify business logic behavior with mocked dependencies. Functional tests only test the business logic implementation (service layer) — they may mock the function's requirements (ports). Handlers are presentation-only and adapters are thin glue; neither is a functional test target. Triggers on "functional test", "test this requirement", "test the service", "does this work as specified".
+name: go-functional-test
+description: Write functional tests in Go for the business logic implementation. Use when the user asks to test whether a Go function or feature fulfills its functional requirement, add *_test.go files for Go services or use cases, or verify business logic behavior with mocked dependencies. Functional tests only test the business logic implementation (service layer) — they may mock the function's requirements (ports). Handlers are presentation-only and adapters are thin glue; neither is a functional test target. Triggers on "functional test", "test this requirement", "test the service", "does this work as specified".
 ---
 
 # Functional Tests (Go)

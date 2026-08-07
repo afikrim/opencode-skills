@@ -1,6 +1,6 @@
 ---
-name: hexagonal-architecture
-description: Structure Go applications using hexagonal (ports & adapters) architecture with thin handlers and adapters designed so they need no tests, and dto+mapper patterns so no layer leaks entity models into external dependencies or presentation. Use when the user asks to scaffold a Go service, organize code into cmd/internal/core/ports/service/adapters/handlers layers, define domain entities and ports, implement adapters (postgresql, redis, queue, etc.), build HTTP/REST handlers, or wire up an application with godotenv + caarlos0/env config. Triggers on "hexagonal architecture", "ports and adapters", "scaffold a Go service", "clean architecture in Go".
+name: go-hexagonal-architecture
+description: Structure Go applications using hexagonal (ports & adapters) architecture with thin handlers and adapters designed so they need no tests, and dto+mapper patterns so no layer leaks entity models into external dependencies or presentation. Use when the user asks to scaffold a Go service, organize code into cmd/internal/core/ports/service/adapters/handlers layers, define domain entities and ports, implement adapters (postgresql, redis, queue, etc.), build HTTP/REST handlers, or wire up a Go application with godotenv + caarlos0/env config. Triggers on "hexagonal architecture", "ports and adapters", "scaffold a Go service", "clean architecture in Go".
 ---
 
 # Hexagonal Architecture (Go)
