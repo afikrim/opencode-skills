@@ -1,5 +1,5 @@
 ---
-name: monitoring
+name: go-monitoring
 description: Add observability to Go services: structured logging with zap, OpenTelemetry (traces/metrics/logs with OTLP export), Prometheus metrics on a separate port, and profiling with pprof + Pyroscope continuous profiling. Use when the user asks to set up logging, tracing, metrics, or profiling in a Go service, or integrate zap, OpenTelemetry, Prometheus, pprof, or Pyroscope. Triggers on "monitoring", "observability", "structured logging", "open telemetry", "metrics", "profiling", "pyroscope", "zap", "prometheus".
 ---
 

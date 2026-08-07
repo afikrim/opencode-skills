@@ -1,5 +1,5 @@
 ---
-name: unit-test
+name: go-unit-test
 description: Write unit tests in Go. Use when the user asks to create or review unit tests, test functions, add *_test.go files, or run `go test`. Unit tests are scoped to pure functions only: mappers, transformers, and helper functions that need no external dependencies. Triggers on "unit test", "write unit tests", "test this mapper/transformer/helper".
 ---
 

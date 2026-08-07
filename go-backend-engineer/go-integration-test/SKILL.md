@@ -1,5 +1,5 @@
 ---
-name: integration-test
+name: go-integration-test
 description: Write integration tests in Go that verify the real wiring of the application layers (handler → service → adapter) while mocking external infrastructure — the database connection via go-sqlmock and external HTTP dependencies via WireMock — comparing actual results against golden files and fixtures. Use when the user asks to test components working together end-to-end, add *_test.go files that exercise the full stack, set up go-sqlmock and go-wiremock, or compare response output with golden files. Triggers on "integration test", "test the full stack", "test handler to database", "mock db with sqlmock", "mock external api with wiremock", "golden file", "fixtures".
 ---
 
