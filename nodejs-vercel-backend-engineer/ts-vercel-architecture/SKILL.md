@@ -1,6 +1,6 @@
 ---
 name: ts-vercel-architecture
-description: Deploy a TypeScript hexagonal architecture app to Vercel as serverless Functions. Builds on the generic ts-hexagonal-architecture layout (Hono + Drizzle + core/ports/service/adapters/handlers), adding the Vercel-specific entrypoint: a single api/[[route]].ts catch-all Function that mounts the Hono app via the hono/vercel handle() adapter, runtime selection (edge vs nodejs), and vercel dev/deploy workflow. Use when the user asks to deploy a Hono TypeScript app to Vercel, create api/[[route]].ts, use hono/vercel handle, choose edge or nodejs runtime, or run the app with vercel dev. Triggers on "vercel", "hono/vercel", "handle", "api/[[route]].ts", "deploy to vercel", "edge runtime", "vercel functions".
+description: Deploy a TypeScript hexagonal architecture app to Vercel with Hono. Builds on the generic ts-hexagonal-architecture layout (Hono + Drizzle + core/ports/service/adapters/handlers), adding the Vercel-specific entrypoint: src/index.ts default-exports the Hono app (official vercel/examples hono boilerplate, no api/ directory, no adapter), plus vercel dev/deploy workflow. Use when the user asks to deploy a Hono TypeScript app to Vercel, wire src/index.ts for Vercel, or run the app with vercel dev / vc dev. Triggers on "vercel", "deploy to vercel", "hono on vercel", "src/index.ts", "vercel dev", "vc dev".
 ---
 
 # Hexagonal Architecture on Vercel (TypeScript)
@@ -12,67 +12,97 @@ Drizzle, dto/mapper patterns, zod config). This skill only changes the
 **entrypoint and deployment story**.
 
 Everything below is identical to the generic skill; the only Vercel-specific
-difference is **how the Hono app is exposed** — a single catch-all Function in
-`api/[[route]].ts`.
+difference is **how the Hono app is exposed** — via `src/index.ts`.
 
-## Why one catch-all file
+## Entrypoint: `src/index.ts` (official boilerplate)
 
-Vercel treats every file under `api/` as a separate Function (and you pay
-cold-start/allocated-compute per function). A **catch-all** `[[route]]` file
-captures every path under `/api` into a single Function, so the entire Hono
-app (all routes) is one deployable unit with one cold start. That matches how
-hexagonal apps already funnel everything through one Hono router.
-
-## The Vercel Adapter: `hono/vercel`
-
-Hono ships an official Vercel adapter. Import `handle` from `hono/vercel`
-(not `hono/node-server` — that one starts its own HTTP server and is for
-self-hosted Node):
+Follow the official Vercel Hono boilerplate
+(`https://github.com/vercel/examples/tree/main/framework-boilerplates/hono`):
+Vercel detects the Hono framework preset and serves the app default-exported
+from `src/index.ts`. There is **no `api/` directory, no adapter import, and
+no `vercel.json` routing** involved.
 
 ```ts
-// api/[[route]].ts
-import { handle } from 'hono/vercel'
-import { createApp } from '../src/app'
+// src/index.ts
+import { Hono } from 'hono'
+import { createApp } from './create-app'
 
-export const config = {
-  runtime: 'edge', // or 'nodejs' — see Runtime Notes
-}
+const app: Hono = createApp()
 
-export default handle(createApp())
+export default app
 ```
 
-- `handle(app)` wraps the Hono app into a Vercel-compatible handler
-  (`(req: Request) => Response`). Vercel calls the default export for every
-  matched request.
+(The boilerplate builds `new Hono()` inline; the hexagonal version imports the
+pre-wired `createApp()` instead. Same shape: build the app, default-export
+it.)
+
+## Entrypoint selection — read this before naming files
+
+The `@vercel/hono` builder does **not** always pick `src/index.ts`. It scans
+candidate filenames in fixed order — `app`, `index`, `server`, `src/app`,
+`src/index`, `src/server` (each with js/cjs/mjs/ts/cts/mts extensions) — and
+selects the **first** file whose content imports `'hono'`. In particular
+`src/app.ts` wins over `src/index.ts`.
+
+Consequences (violating any of these breaks deploys with
+`Error: Can't detect way to handle request` / `FUNCTION_INVOCATION_FAILED`):
+
+- The composition-root factory MUST live in a filename the builder never
+  scans — e.g. `src/create-app.ts` (`createApp()`), never `src/app.ts`.
+- `src/index.ts` MUST itself contain a `hono` import (e.g.
+  `import { Hono } from 'hono'`) and MUST default-export the built app
+  instance (an object with `.fetch`), never the factory.
+- Never give any other scanned filename (`app.*`, `server.*`, `src/server.*`)
+  a hono import unless that file default-exports the app instance.
+
 - The default export is the only thing Vercel invokes. No HTTP server is ever
   started — Vercel manages invocation, scaling, and lifecycle.
 - Keep this file **empty of logic**: it imports a pre-wired `createApp()` and
-  exports the handler. All route wiring lives in `src/handlers/routes.ts`
+  default-exports the app. All route wiring lives in `src/handlers/routes.ts`
   exactly as the generic skill describes.
+- The generic skill's `@hono/node-server` `serve()` entrypoint is for
+  self-hosted Node only. On Vercel, `src/index.ts` replaces it — do not call
+  `serve()` here.
+
+## Do NOT use the `api/` catch-all path
+
+Do **not** create any of the following:
+
+- `api/[[route]].ts` or `api/index.ts` catch-all Functions;
+- `import { handle } from 'hono/vercel'` (no adapter is needed — the framework
+  preset serves the default export directly);
+- `vercel.json` rewrites for API routing;
+- esbuild prebuild bundles (`build.mjs`, `api/index.js`,
+  `api/package.json` overrides) — these were workarounds for the `api/`
+  Functions transpile model and do not apply to the `src/index.ts` preset.
+
+If you see any of these in a repo using this skill, remove them as part of
+your change — they conflict with the preset (duplicate route mapping,
+ESM/CJS interop failures) and will mislead future work.
 
 ## Runtime Notes
 
-- `runtime: 'edge'` runs on the Vercel Edge Runtime: fast cold starts, no
-  Node.js APIs, Web-standard runtime. Works if your adapters use only
-  Web-standard APIs (`fetch`, HTTP drivers). Drizzle's `neon-http`,
-  `drizzle-orm/http-proxy` / edge-compatible drivers work here.
-- `runtime: 'nodejs'` runs on the Node.js runtime and supports full Node APIs
-  (`node-postgres` TCP pools, `fs`, `crypto`, etc.). Choose nodejs when an
-  adapter needs a TCP connection, native module, or a Node-only library.
-- Pick per Function. If one route needs Node-only features, you can split it
-  into its own file under `api/` with `runtime: 'nodejs'` while the rest stays
-  edge — but prefer the single catch-all unless you have a real reason.
-- Whatever you pick, run locally with `vercel dev` (not `tsx src/index.ts`) so
-  routing/runtime matches production.
+- The Hono preset runs on the Node.js runtime by default, so adapters may use
+  full Node APIs (`node-postgres` TCP pools, `fs`, `crypto`, Node-only SDKs).
+- If you need anything other than the default runtime, consult the current
+  Vercel docs rather than guessing at config shapes — do not invent
+  `export const config` blocks.
+- Whatever the setup, run locally with `vc dev` / `vercel dev` (not
+  `tsx src/index.ts`) so routing/runtime matches production.
 
 ## Local Development
 
 ```sh
-npx vercel dev
+npm install
+vc dev        # or: npx vercel dev
+# open http://localhost:3000
 ```
 
-- Serves the app at `http://localhost:3000`, applying the same `api/`
-  catch-all routing as production.
+```sh
+vc build      # build locally, same as production
+```
+
+- Serves the app at `http://localhost:3000` with production routing.
 - Loads env vars from `.env` / `.env.local` / Vercel project settings. No
   `dotenv` call needed in the function.
 
@@ -94,27 +124,39 @@ const envSchema = z.object({
   fills `process.env` the same way a `.env` file would.
 - Sensitive values are managed in the Vercel dashboard / CLI, never committed.
   `.env.local` is git-ignored.
+- The env file for `vercel dev` is written to `.env.local` / `.vercel/.env` by
+  `vercel link` / `vercel env pull`; do not commit it.
 
 ## Deployment
 
 ```sh
-npx vercel dev       # local
-npx vercel           # preview deployment
-npx vercel --prod    # production
+# one-time: create + link
+vercel link --yes
+
+# push env
+vercel env add NAME production
+vercel env add NAME preview
+vercel env add NAME development
+
+# deploy
+vercel --prod --yes   # production
+vercel                # preview
 ```
 
-- Vercel auto-detects the `api/` Functions convention; no `vercel.json`
-  routing needed for the catch-all.
-- On deploy, `api/[[route]].ts` becomes the `/api/*` Function and everything
-  the app exposes through Hono is reachable under that prefix.
+- `vc deploy` from the boilerplate README maps to the same flow.
+- No `api/` Functions convention is involved — the single default export in
+  `src/index.ts` is the whole app, so there is one deployable unit and one
+  cold start by construction.
 
 ## Composition Root
 
-Exactly like the generic skill — `createApp()` in `src/app.ts` builds
-adapters → services → handlers → Hono routes. The catch-all only mounts it:
+Exactly like the generic skill — `createApp()` in `src/create-app.ts` builds
+adapters → services → handlers → Hono routes (the filename matters: see
+Entrypoint selection — never `src/app.ts`). `src/index.ts` only instantiates
+and default-exports it:
 
 ```ts
-// src/app.ts
+// src/create-app.ts
 export function createApp(overrides?: { db?: DB }): App {
   const db = overrides?.db ?? defaultDb
   const userRepo = new PostgresUserRepository(db)
@@ -122,16 +164,24 @@ export function createApp(overrides?: { db?: DB }): App {
   return new Hono().basePath('/api').route('/users', createUserRoutes(userService))
 }
 
-// api/[[route]].ts
-export default handle(createApp())
+// src/index.ts
+import { Hono } from 'hono'
+import { createApp } from './create-app'
+
+const app: Hono = createApp()
+
+export default app
 ```
 
 ## Verification
 
-- `npx vercel dev` serves the app locally and routes match production.
+- `vc dev` / `npx vercel dev` serves the app locally and routes match production.
 - `npm run build` (tsc) passes.
-- `api/[[route]].ts` contains no logic — only `import { handle } from 'hono/vercel'`,
-  `export const config`, and `export default handle(createApp())`.
-- Confirm `hono/vercel` is the adapter used, not `hono/node-server`.
-- `npx vercel --prod` deploys; hit `/api/...` to confirm the catch-all routes.
+- `src/index.ts` contains no logic — only the `hono` import, `createApp()`
+  import, and `export default app`.
+- Confirm the factory lives in a builder-invisible filename (`src/create-app.ts`,
+  not `src/app.ts`) and no other scanned entrypoint filename imports `hono`.
+- Confirm there is no `api/` directory, no `hono/vercel` import, and no
+  `vercel.json` routing rewrites for the API.
+- `npx vercel --prod` deploys; hit `/api/...` to confirm the routes.
 - Confirm no Drizzle/Hono types leak into `core/` (see generic skill checks).

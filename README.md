@@ -90,6 +90,28 @@ live in `nodejs-nextjs-engineer`).
 - **react-testing** — Vitest + Testing Library + user-event: queries by
   role/label, user interactions, async/`findBy`, mocking fetch, `renderHook`.
 
+### system-design
+
+- **system-design-diagram** — build a system design board: context actors,
+  deployment-boundary sections (AWS/NIAGAHOSTER/VPN) with nested layer
+  subsections, component/data-store/annotation notation, labeled connectors,
+  CI/CD lanes, per-scenario flowcharts, DB schema widgets, rationale stickies.
+- **figjam-system-design** — render those system design boards in FigJam:
+  shape→meaning mapping (SQUARE / ENG_QUEUE / ENG_DATABASE / ELLIPSE /
+  ROUNDED_RECTANGLE / DIAMOND), boundary sections, connector labels, sticky
+  semantics, Database Table widget, API recipes.
+
+### product-design
+
+- **product-design-flow** — turn a raw idea into a product design flow board
+  (six blocks: ideation, research, concept, user flows, data, business rules)
+  with fixed flowchart notation; pattern-matches the Duitin/Dong-Feng Hack
+  board.
+- **figjam-product-design-flow** — render those product design flow boards in
+  FigJam: sticky color semantics (red=ideas/rules, gray=research/data),
+  Start/Stop/step/decision shapes, labeled Yes/No connectors, lane grid,
+  sub-flow expansion, API recipes.
+
 ### nodejs-nextjs-engineer
 
 - **nextjs-architecture** — optimal Next.js (App Router) implementation:
